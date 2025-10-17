@@ -27,7 +27,10 @@ export default function LoginForm() {
     }
 
     try {
-      const { error: signInError } = await signIn(email, password);
+      console.log('Attempting login...');
+      const { data, error: signInError } = await signIn(email, password);
+
+      console.log('Login response:', { data, error: signInError });
 
       if (signInError) {
         setError(signInError.message);
@@ -35,9 +38,25 @@ export default function LoginForm() {
         return;
       }
 
+      // Check if session was created
+      if (!data.session) {
+        console.error('No session in response:', data);
+        setError('Login failed - no session created');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Session created successfully:', data.session);
+      console.log('Access token:', data.session.access_token ? 'Present' : 'Missing');
+
+      // Small delay to ensure session is stored
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log('Redirecting to dashboard...');
       // Redirect to dashboard
       window.location.href = '/dashboard';
     } catch (err) {
+      console.error('Login error:', err);
       setError('An unexpected error occurred');
       setLoading(false);
     }

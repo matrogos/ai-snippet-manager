@@ -14,8 +14,8 @@ export default defineConfig({
   output: 'server',
   adapter: vercel(),
   vite: {
-    optimizeDeps: {
-      exclude: ['@supabase/supabase-js'],
+    ssr: {
+      noExternal: ['@supabase/supabase-js'],
     },
   },
 });

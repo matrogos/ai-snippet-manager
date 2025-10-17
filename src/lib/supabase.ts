@@ -9,19 +9,31 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Client for browser usage
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
 
 // ============ Authentication ============
 
 export async function getCurrentUser(): Promise<User | null> {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) return null;
 
-  return {
-    id: user.id,
-    email: user.email!,
-    created_at: user.created_at,
-  };
+    return {
+      id: session.user.id,
+      email: session.user.email!,
+      created_at: session.user.created_at,
+    };
+  } catch (error) {
+    return null;
+  }
 }
 
 export async function signIn(email: string, password: string) {

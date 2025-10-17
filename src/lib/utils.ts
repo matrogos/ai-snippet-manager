@@ -1,4 +1,5 @@
-import { SUPPORTED_LANGUAGES, MAX_SNIPPET_TITLE_LENGTH, MAX_SNIPPET_CODE_LENGTH } from '@/config/constants';
+import { SUPPORTED_LANGUAGES } from '@/config/languages';
+import { MAX_SNIPPET_TITLE_LENGTH, MAX_SNIPPET_CODE_LENGTH } from '@/config/constants';
 import type { CreateSnippetInput } from '@/types/snippet';
 
 // Input sanitization
