@@ -13,10 +13,77 @@ export default function SnippetDetail({ snippetId }: Props) {
   const [copied, setCopied] = useState(false);
   const [explanation, setExplanation] = useState('');
   const [explaining, setExplaining] = useState(false);
+  const [highlightedCode, setHighlightedCode] = useState('');
 
   useEffect(() => {
     loadSnippet();
   }, [snippetId]);
+
+  useEffect(() => {
+    if (snippet && typeof window !== 'undefined') {
+      highlightCode();
+    }
+  }, [snippet]);
+
+  async function highlightCode() {
+    if (!snippet) return;
+
+    try {
+      // Dynamically import Prism only on client side
+      const Prism = (await import('prismjs')).default;
+
+      // Import theme
+      await import('prismjs/themes/prism-tomorrow.css');
+
+      // Map language names to Prism component names
+      const languageMap: Record<string, string> = {
+        javascript: 'javascript',
+        typescript: 'typescript',
+        jsx: 'jsx',
+        tsx: 'tsx',
+        python: 'python',
+        java: 'java',
+        csharp: 'csharp',
+        cpp: 'cpp',
+        c: 'c',
+        go: 'go',
+        rust: 'rust',
+        php: 'php',
+        ruby: 'ruby',
+        swift: 'swift',
+        kotlin: 'kotlin',
+        sql: 'sql',
+        bash: 'bash',
+        json: 'json',
+        yaml: 'yaml',
+        markdown: 'markdown',
+        css: 'css',
+        scss: 'scss',
+        html: 'markup',
+      };
+
+      const lang = snippet.language.toLowerCase();
+      const prismLang = languageMap[lang] || 'javascript';
+
+      // Dynamically import only the needed language
+      try {
+        if (prismLang !== 'javascript' && prismLang !== 'markup') {
+          await import(`prismjs/components/prism-${prismLang}`);
+        }
+      } catch (e) {
+        console.warn(`Could not load Prism language: ${prismLang}`);
+      }
+
+      // Highlight the code
+      const grammar = Prism.languages[prismLang] || Prism.languages.javascript;
+      const highlighted = Prism.highlight(snippet.code, grammar, prismLang);
+      setHighlightedCode(highlighted);
+    } catch (err) {
+      console.error('Syntax highlighting error:', err);
+      // Fallback to plain code
+      setHighlightedCode(snippet.code);
+    }
+  }
 
   async function loadSnippet() {
     try {
@@ -182,10 +249,11 @@ export default function SnippetDetail({ snippetId }: Props) {
             {copied ? '✓ Copied!' : 'Copy'}
           </button>
         </div>
-        <pre className="!m-0 !rounded-none !bg-gray-900">
-          <code className="text-gray-100 block p-4 overflow-x-auto">
-            {snippet.code}
-          </code>
+        <pre className="!m-0 !rounded-none language-{snippet.language.toLowerCase()}">
+          <code
+            className={`language-${snippet.language.toLowerCase()} block overflow-x-auto`}
+            dangerouslySetInnerHTML={{ __html: highlightedCode || snippet.code }}
+          />
         </pre>
       </div>
 
