@@ -1,0 +1,14 @@
+---
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import SnippetDetail from '@/components/snippets/SnippetDetail.tsx';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/dashboard');
+}
+---
+
+<DashboardLayout title="Snippet - AI Snippet Manager">
+  <SnippetDetail client:load snippetId={id} />
+</DashboardLayout>

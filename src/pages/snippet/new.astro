@@ -1,0 +1,15 @@
+---
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import SnippetFormWrapper from '@/components/snippets/SnippetFormWrapper.tsx';
+---
+
+<DashboardLayout title="New Snippet - AI Snippet Manager">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Create New Snippet</h1>
+    <p class="text-gray-600">Add a new code snippet to your collection</p>
+  </div>
+
+  <div class="card max-w-4xl">
+    <SnippetFormWrapper client:load mode="create" />
+  </div>
+</DashboardLayout>
