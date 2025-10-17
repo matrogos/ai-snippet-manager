@@ -1,56 +1,8 @@
 ---
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import DashboardContent from '@/components/snippets/DashboardContent';
 ---
 
 <DashboardLayout title="Dashboard - AI Snippet Manager">
-  <div id="dashboard-content" class="hidden">
-    <div class="mb-8">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">My Snippets</h1>
-          <p class="text-gray-600">Welcome back! You're logged in as <span id="user-email" class="font-medium"></span></p>
-        </div>
-        <a href="/snippet/new" class="btn btn-primary px-6 py-3">
-          + New Snippet
-        </a>
-      </div>
-    </div>
-
-    <div id="snippets-list-mount"></div>
-  </div>
-
-  <div id="loading-state" class="flex justify-center items-center min-h-screen">
-    <div class="text-center">
-      <div class="text-4xl mb-4">⏳</div>
-      <p class="text-gray-600">Loading...</p>
-    </div>
-  </div>
-
-  <script>
-    import { supabase } from '@/lib/supabase';
-    import SnippetList from '@/components/snippets/SnippetList';
-    import { createRoot } from 'react-dom/client';
-    import { createElement } from 'react';
-
-    async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        window.location.href = '/login';
-        return;
-      }
-
-      // Show dashboard content
-      document.getElementById('loading-state')!.classList.add('hidden');
-      document.getElementById('dashboard-content')!.classList.remove('hidden');
-      document.getElementById('user-email')!.textContent = session.user.email || '';
-
-      // Mount snippet list
-      const container = document.getElementById('snippets-list-mount')!;
-      const root = createRoot(container);
-      root.render(createElement(SnippetList));
-    }
-
-    checkAuth();
-  </script>
+  <DashboardContent client:load />
 </DashboardLayout>
