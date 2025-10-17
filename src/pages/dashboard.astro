@@ -16,14 +16,7 @@ import DashboardLayout from '@/layouts/DashboardLayout.astro';
       </div>
     </div>
 
-    <div class="card text-center py-16">
-      <div class="text-6xl mb-4">📝</div>
-      <h2 class="text-2xl font-semibold text-gray-900 mb-2">No snippets yet</h2>
-      <p class="text-gray-600 mb-6">Create your first code snippet to get started</p>
-      <a href="/snippet/new" class="btn btn-primary px-8 py-3 inline-flex">
-        Create your first snippet
-      </a>
-    </div>
+    <div id="snippets-list-mount"></div>
   </div>
 
   <div id="loading-state" class="flex justify-center items-center min-h-screen">
@@ -35,6 +28,9 @@ import DashboardLayout from '@/layouts/DashboardLayout.astro';
 
   <script>
     import { supabase } from '@/lib/supabase';
+    import SnippetList from '@/components/snippets/SnippetList';
+    import { createRoot } from 'react-dom/client';
+    import { createElement } from 'react';
 
     async function checkAuth() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -48,6 +44,11 @@ import DashboardLayout from '@/layouts/DashboardLayout.astro';
       document.getElementById('loading-state')!.classList.add('hidden');
       document.getElementById('dashboard-content')!.classList.remove('hidden');
       document.getElementById('user-email')!.textContent = session.user.email || '';
+
+      // Mount snippet list
+      const container = document.getElementById('snippets-list-mount')!;
+      const root = createRoot(container);
+      root.render(createElement(SnippetList));
     }
 
     checkAuth();
