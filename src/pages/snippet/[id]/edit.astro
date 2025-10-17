@@ -1,0 +1,21 @@
+---
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import SnippetFormWrapper from '@/components/snippets/SnippetFormWrapper.tsx';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/dashboard');
+}
+---
+
+<DashboardLayout title="Edit Snippet - AI Snippet Manager">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Edit Snippet</h1>
+    <p class="text-gray-600">Update your code snippet</p>
+  </div>
+
+  <div class="card max-w-4xl">
+    <SnippetFormWrapper client:load mode="edit" snippetId={id} />
+  </div>
+</DashboardLayout>
