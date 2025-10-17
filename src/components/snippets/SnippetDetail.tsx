@@ -11,6 +11,8 @@ export default function SnippetDetail({ snippetId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [explanation, setExplanation] = useState('');
+  const [explaining, setExplaining] = useState(false);
 
   useEffect(() => {
     loadSnippet();
@@ -70,6 +72,33 @@ export default function SnippetDetail({ snippetId }: Props) {
       window.location.href = '/dashboard';
     } catch (err: any) {
       alert('Failed to delete snippet: ' + err.message);
+    }
+  }
+
+  async function handleExplainCode() {
+    if (!snippet) return;
+
+    setExplaining(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/ai/explain-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: snippet.code, language: snippet.language }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to explain code');
+      }
+
+      setExplanation(data.explanation);
+    } catch (err: any) {
+      setError(err.message || 'Failed to explain code');
+    } finally {
+      setExplaining(false);
     }
   }
 
@@ -158,6 +187,28 @@ export default function SnippetDetail({ snippetId }: Props) {
             {snippet.code}
           </code>
         </pre>
+      </div>
+
+      {/* AI Explanation */}
+      <div className="mt-6">
+        <button
+          onClick={handleExplainCode}
+          disabled={explaining}
+          className="btn btn-secondary px-6 py-2"
+        >
+          {explaining ? '✨ Explaining...' : '✨ Explain Code with AI'}
+        </button>
+
+        {explanation && (
+          <div className="card mt-4 bg-blue-50 border-blue-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              AI Code Explanation
+            </h3>
+            <div className="text-gray-700 whitespace-pre-wrap">
+              {explanation}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Back Button */}

@@ -23,6 +23,7 @@ export default function SnippetForm({ snippet, onSubmit, submitLabel = 'Create S
   const [tagsInput, setTagsInput] = useState(snippet?.tags?.join(', ') || '');
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState<'description' | 'tags' | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -61,6 +62,66 @@ export default function SnippetForm({ snippet, onSubmit, submitLabel = 'Create S
     } catch (err: any) {
       setErrors([err.message || 'An error occurred while saving the snippet']);
       setLoading(false);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!code || !language) {
+      setErrors(['Please add code first before generating a description']);
+      return;
+    }
+
+    setAiLoading('description');
+    setErrors([]);
+
+    try {
+      const response = await fetch('/api/ai/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate description');
+      }
+
+      setDescription(data.description);
+    } catch (err: any) {
+      setErrors([err.message || 'Failed to generate description']);
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
+  const handleSuggestTags = async () => {
+    if (!code || !language) {
+      setErrors(['Please add code first before suggesting tags']);
+      return;
+    }
+
+    setAiLoading('tags');
+    setErrors([]);
+
+    try {
+      const response = await fetch('/api/ai/suggest-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to suggest tags');
+      }
+
+      setTagsInput(data.tags.join(', '));
+    } catch (err: any) {
+      setErrors([err.message || 'Failed to suggest tags']);
+    } finally {
+      setAiLoading(null);
     }
   };
 
@@ -130,9 +191,19 @@ export default function SnippetForm({ snippet, onSubmit, submitLabel = 'Create S
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-          Description (Optional)
-        </label>
+        <div className="flex justify-between items-center mb-2">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            Description (Optional)
+          </label>
+          <button
+            type="button"
+            onClick={handleGenerateDescription}
+            disabled={aiLoading !== null || !code}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            {aiLoading === 'description' ? '✨ Generating...' : '✨ Generate with AI'}
+          </button>
+        </div>
         <textarea
           id="description"
           rows={3}
@@ -142,14 +213,24 @@ export default function SnippetForm({ snippet, onSubmit, submitLabel = 'Create S
           placeholder="Describe what this code does..."
         />
         <p className="text-xs text-gray-500 mt-1">
-          You can also generate a description using AI later
+          AI can generate a description based on your code
         </p>
       </div>
 
       <div>
-        <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
-          Tags (Optional)
-        </label>
+        <div className="flex justify-between items-center mb-2">
+          <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+            Tags (Optional)
+          </label>
+          <button
+            type="button"
+            onClick={handleSuggestTags}
+            disabled={aiLoading !== null || !code}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            {aiLoading === 'tags' ? '✨ Suggesting...' : '✨ Suggest with AI'}
+          </button>
+        </div>
         <input
           id="tags"
           type="text"
@@ -159,7 +240,7 @@ export default function SnippetForm({ snippet, onSubmit, submitLabel = 'Create S
           placeholder="e.g., algorithm, sorting, array (comma-separated)"
         />
         <p className="text-xs text-gray-500 mt-1">
-          Separate tags with commas. You can also generate tags using AI later
+          Separate tags with commas. AI can suggest relevant tags based on your code
         </p>
       </div>
 
