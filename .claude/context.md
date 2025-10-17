@@ -32,15 +32,15 @@ Please read these documents before starting any development:
 ## 🛠️ Technology Stack
 
 **Frontend:**
-- Astro 4.x (Static Site Generator with Islands Architecture)
-- React 18 (for interactive components only)
+- Astro 5.x (Static Site Generator with Islands Architecture)
+- React 19 (for interactive components only)
 - TypeScript (strict mode)
 - Tailwind CSS (utility-first styling)
 
 **Backend Services:**
 - Supabase Auth (authentication)
 - Supabase PostgreSQL (database with Row-Level Security)
-- OpenAI API GPT-3.5-turbo (AI features)
+- OpenAI API gpt-5-mini (AI features)
 
 **Development:**
 - Prism.js (syntax highlighting)
