@@ -10,11 +10,11 @@ This project is built for the **AI for Developers** certification program. It de
 - 🔐 User authentication and secure snippet storage
 - ✍️ Create, read, update, and delete code snippets
 - 🤖 AI-powered description generation
-- 📖 AI code explanations (line-by-line)
+- 📖 AI code explanations
 - 🏷️ Automatic tag suggestions
-- 🔍 Search and filter by language, tags, or title
-- 🎨 Syntax highlighting for 13+ programming languages
+- 🔍 Search and filter by language, tags, or content
 - 📱 Responsive design
+- ⚡ Real-time filtering and search
 
 ## 🛠️ Tech Stack
 
@@ -25,14 +25,13 @@ This project is built for the **AI for Developers** certification program. It de
 - [Tailwind CSS](https://tailwindcss.com/) - Styling
 
 **Backend Services:**
-- [Supabase](https://supabase.com/) - Authentication & PostgreSQL database
-- [OpenAI API](https://platform.openai.com/) - AI features (GPT-3.5-turbo)
+- [Supabase](https://supabase.com/) - Authentication & PostgreSQL database with Row-Level Security
+- [OpenAI API](https://platform.openai.com/) - AI features (gpt-4o-mini)
 
 **Development Tools:**
-- [Prism.js](https://prismjs.com/) - Syntax highlighting
-- [Playwright](https://playwright.dev/) - E2E testing
-- [GitHub Actions](https://github.com/features/actions) - CI/CD
-- [Vercel](https://vercel.com/) - Hosting
+- [Playwright](https://playwright.dev/) - E2E testing (planned)
+- [GitHub](https://github.com/) - Version control
+- [Vercel](https://vercel.com/) - Hosting (deployment ready)
 
 ## 🚀 Getting Started
 
@@ -68,7 +67,8 @@ This project is built for the **AI for Developers** certification program. It de
 
 4. **Set up the database**
    - Create a new project in [Supabase](https://app.supabase.com/)
-   - Run the SQL schema from `docs/database-schema.sql` in the Supabase SQL editor
+   - Run the SQL schema from `database-schema.sql` in the Supabase SQL editor
+   - See `SUPABASE-SETUP.md` for detailed instructions
 
 5. **Run the development server**
    ```bash
@@ -79,10 +79,8 @@ This project is built for the **AI for Developers** certification program. It de
 
 ## 📚 Documentation
 
-- **[MVP.md](docs/MVP.md)** - Minimum Viable Product specification
-- **[PRD.md](docs/PRD.md)** - Product Requirements Document
-- **[TAD.md](docs/TAD.md)** - Technical Architecture Document
-- **[Database Schema](docs/database-schema.sql)** - PostgreSQL schema with RLS policies
+- **[database-schema.sql](database-schema.sql)** - PostgreSQL schema with RLS policies
+- **[SUPABASE-SETUP.md](SUPABASE-SETUP.md)** - Step-by-step Supabase configuration guide
 
 ## 🧪 Testing
 
@@ -159,18 +157,21 @@ ai-snippet-manager/
 
 ### Snippet Management
 - Create, read, update, delete snippets
-- Syntax highlighting for 13+ languages
-- Code editor with line numbers
+- Support for 20+ programming languages
+- Clean code display with copy to clipboard
 
-### AI Features
+### AI Features (OpenAI gpt-4o-mini)
 - **Auto-generate descriptions** - Get a concise summary of what your code does
-- **Explain code** - Line-by-line explanations for better understanding
+- **Explain code** - Detailed explanations for better understanding
 - **Suggest tags** - Automatic categorization based on code analysis
+- All AI features accessible with one click from the UI
 
 ### Organization
-- Search by title, tags, or description
+- Real-time search across title, description, code, and tags
 - Filter by programming language
-- Full-text search capabilities
+- Filter by tags
+- Combine multiple filters
+- Visual active filter display with quick clear options
 
 ## 🔒 Security
 
