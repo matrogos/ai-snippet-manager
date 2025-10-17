@@ -1,32 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Snippet } from '@/types/snippet';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css';
-
-// Import common language components
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-jsx';
-import 'prismjs/components/prism-tsx';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-java';
-import 'prismjs/components/prism-csharp';
-import 'prismjs/components/prism-cpp';
-import 'prismjs/components/prism-c';
-import 'prismjs/components/prism-go';
-import 'prismjs/components/prism-rust';
-import 'prismjs/components/prism-php';
-import 'prismjs/components/prism-ruby';
-import 'prismjs/components/prism-swift';
-import 'prismjs/components/prism-kotlin';
-import 'prismjs/components/prism-sql';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-yaml';
-import 'prismjs/components/prism-markdown';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-scss';
 
 interface Props {
   snippetId: string;
@@ -37,17 +11,10 @@ export default function SnippetDetail({ snippetId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const codeRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     loadSnippet();
   }, [snippetId]);
-
-  useEffect(() => {
-    if (snippet && codeRef.current) {
-      Prism.highlightElement(codeRef.current);
-    }
-  }, [snippet]);
 
   async function loadSnippet() {
     try {
@@ -125,8 +92,6 @@ export default function SnippetDetail({ snippetId }: Props) {
     );
   }
 
-  const languageClass = `language-${snippet.language.toLowerCase()}`;
-
   return (
     <div>
       {/* Header */}
@@ -188,8 +153,8 @@ export default function SnippetDetail({ snippetId }: Props) {
             {copied ? '✓ Copied!' : 'Copy'}
           </button>
         </div>
-        <pre className="!m-0 !rounded-none">
-          <code ref={codeRef} className={languageClass}>
+        <pre className="!m-0 !rounded-none !bg-gray-900">
+          <code className="text-gray-100 block p-4 overflow-x-auto">
             {snippet.code}
           </code>
         </pre>
