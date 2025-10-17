@@ -1,0 +1,15 @@
+---
+import AuthLayout from '@/layouts/AuthLayout.astro';
+import LoginForm from '@/components/auth/LoginForm';
+import { getCurrentUser } from '@/lib/supabase';
+
+// Redirect if already logged in
+const user = await getCurrentUser();
+if (user) {
+  return Astro.redirect('/dashboard');
+}
+---
+
+<AuthLayout title="Login - AI Snippet Manager">
+  <LoginForm client:load />
+</AuthLayout>
