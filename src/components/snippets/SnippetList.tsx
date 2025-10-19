@@ -1,39 +1,60 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase, getSnippets } from '@/lib/supabase';
+import { fetchSnippets } from '@/lib/api-client';
 import SnippetCard from './SnippetCard';
 import { SUPPORTED_LANGUAGES, LANGUAGE_LABELS } from '@/config/languages';
 import type { Snippet } from '@/types/snippet';
+import type { PaginationMetadata } from '@/types/snippet.dto';
 
 export default function SnippetList() {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [pagination, setPagination] = useState<PaginationMetadata | null>(null);
+
+  // Debounce search query to avoid triggering API on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     loadSnippets();
-  }, []);
+  }, [debouncedSearchQuery, selectedLanguage, selectedTag]);
 
   async function loadSnippets() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/login';
-        return;
-      }
+      setLoading(true);
+      setError('');
 
-      const data = await getSnippets(session.user.id);
-      setSnippets(data);
+      const result = await fetchSnippets({
+        page: 1,
+        limit: 100, // Load all for now (client-side pagination not implemented yet)
+        language: selectedLanguage !== 'all' ? selectedLanguage : undefined,
+        tags: selectedTag !== 'all' ? selectedTag : undefined,
+        search: debouncedSearchQuery || undefined,
+      });
+
+      setSnippets(result.data);
+      setPagination(result.pagination);
     } catch (err: any) {
       setError(err.message || 'Failed to load snippets');
+      // Redirect to login if not authenticated
+      if (err.message?.includes('Not authenticated')) {
+        window.location.href = '/login';
+      }
     } finally {
       setLoading(false);
     }
   }
 
-  // Get all unique tags from snippets
+  // Get all unique tags from snippets (for tag filter dropdown)
   const allTags = useMemo(() => {
     const tags = new Set<string>();
     snippets.forEach(snippet => {
@@ -42,37 +63,11 @@ export default function SnippetList() {
     return Array.from(tags).sort();
   }, [snippets]);
 
-  // Filter snippets based on search and filters
-  const filteredSnippets = useMemo(() => {
-    return snippets.filter(snippet => {
-      // Search filter (title, description, code)
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = snippet.title.toLowerCase().includes(query);
-        const matchesDescription = snippet.description?.toLowerCase().includes(query);
-        const matchesCode = snippet.code.toLowerCase().includes(query);
-        const matchesTags = snippet.tags?.some(tag => tag.toLowerCase().includes(query));
+  // Snippets are already filtered server-side, no need for client-side filtering
+  const filteredSnippets = snippets;
 
-        if (!matchesTitle && !matchesDescription && !matchesCode && !matchesTags) {
-          return false;
-        }
-      }
-
-      // Language filter
-      if (selectedLanguage !== 'all' && snippet.language !== selectedLanguage) {
-        return false;
-      }
-
-      // Tag filter
-      if (selectedTag !== 'all' && !snippet.tags?.includes(selectedTag)) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [snippets, searchQuery, selectedLanguage, selectedTag]);
-
-  if (loading) {
+  // Show initial loading state only on first load
+  if (loading && snippets.length === 0 && !error) {
     return (
       <div className="flex justify-center items-center py-16">
         <div className="text-center">
@@ -83,7 +78,7 @@ export default function SnippetList() {
     );
   }
 
-  if (error) {
+  if (error && snippets.length === 0) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
         {error}
@@ -91,7 +86,8 @@ export default function SnippetList() {
     );
   }
 
-  if (snippets.length === 0) {
+  // Show "no snippets yet" only when there are truly no snippets (no filters applied)
+  if (snippets.length === 0 && !searchQuery && !debouncedSearchQuery && selectedLanguage === 'all' && selectedTag === 'all' && !loading) {
     return (
       <div className="card text-center py-16">
         <div className="text-6xl mb-4">📝</div>
@@ -112,7 +108,7 @@ export default function SnippetList() {
           {/* Search Input */}
           <div className="md:col-span-3 lg:col-span-1">
             <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-              Search
+              Search {loading && searchQuery !== debouncedSearchQuery && <span className="text-gray-500 text-xs">(searching...)</span>}
             </label>
             <input
               id="search"
@@ -138,7 +134,7 @@ export default function SnippetList() {
               <option value="all">All Languages</option>
               {SUPPORTED_LANGUAGES.map((lang) => (
                 <option key={lang} value={lang}>
-                  {LANGUAGE_LABELS[lang]}
+                  {LANGUAGE_LABELS[lang as keyof typeof LANGUAGE_LABELS]}
                 </option>
               ))}
             </select>
@@ -183,7 +179,7 @@ export default function SnippetList() {
             )}
             {selectedLanguage !== 'all' && (
               <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                Language: {LANGUAGE_LABELS[selectedLanguage]}
+                Language: {LANGUAGE_LABELS[selectedLanguage as keyof typeof LANGUAGE_LABELS] || selectedLanguage}
                 <button
                   onClick={() => setSelectedLanguage('all')}
                   className="hover:text-green-900"
@@ -220,9 +216,22 @@ export default function SnippetList() {
       {/* Results Count */}
       <div className="mb-6 flex justify-between items-center">
         <p className="text-gray-600">
-          {filteredSnippets.length} snippet{filteredSnippets.length !== 1 ? 's' : ''} found
-          {filteredSnippets.length !== snippets.length && (
-            <span className="text-gray-500"> (filtered from {snippets.length})</span>
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <span className="inline-block animate-spin">⏳</span>
+              Loading...
+            </span>
+          ) : pagination ? (
+            <>
+              {pagination.total} snippet{pagination.total !== 1 ? 's' : ''} found
+              {pagination.total_pages > 1 && (
+                <span className="text-gray-500"> (page {pagination.page} of {pagination.total_pages})</span>
+              )}
+            </>
+          ) : (
+            <>
+              {filteredSnippets.length} snippet{filteredSnippets.length !== 1 ? 's' : ''} found
+            </>
           )}
         </p>
       </div>
