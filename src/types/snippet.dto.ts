@@ -79,6 +79,22 @@ export interface GetSnippetByIdCommand {
 }
 
 /**
+ * Service command model for deleting a snippet
+ */
+export interface DeleteSnippetCommand {
+  id: string;
+  user_id: string;
+}
+
+/**
+ * Response DTO for DELETE /api/snippets/{id}
+ */
+export interface DeleteSnippetResponseDTO {
+  message: string;
+  id: string;
+}
+
+/**
  * Standard error response format
  */
 export interface ErrorResponse {

@@ -2,8 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import type {
   GetSnippetsCommand,
   GetSnippetByIdCommand,
+  DeleteSnippetCommand,
   SnippetResponseDTO,
   PaginatedSnippetsResponseDTO,
+  DeleteSnippetResponseDTO,
 } from '@/types/snippet.dto';
 
 /**
@@ -172,6 +174,56 @@ export class SnippetService {
       };
     } catch (error) {
       console.error('Service error in getSnippetById:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a snippet by ID for a user
+   * Returns DeleteSnippetResponseDTO if successful, null if not found or doesn't belong to user
+   */
+  static async deleteSnippet(
+    command: DeleteSnippetCommand,
+    accessToken: string
+  ): Promise<DeleteSnippetResponseDTO | null> {
+    try {
+      // Create authenticated Supabase client with the user's token
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      });
+
+      // Delete snippet by ID and user_id for security
+      // RLS policies will also enforce this at database level
+      const { error, count } = await supabase
+        .from('snippets')
+        .delete({ count: 'exact' })
+        .eq('id', command.id)
+        .eq('user_id', command.user_id);
+
+      if (error) {
+        console.error('Database error in deleteSnippet:', error);
+        throw error;
+      }
+
+      // If no rows were affected, snippet not found or doesn't belong to user
+      if (!count || count === 0) {
+        return null;
+      }
+
+      // Return success response
+      return {
+        message: 'Snippet deleted successfully',
+        id: command.id,
+      };
+    } catch (error) {
+      console.error('Service error in deleteSnippet:', error);
       throw error;
     }
   }

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { fetchSnippetById } from '@/lib/api-client';
+import { fetchSnippetById, deleteSnippet } from '@/lib/api-client';
 import type { Snippet } from '@/types/snippet';
 
 interface Props {
@@ -118,12 +117,7 @@ export default function SnippetDetail({ snippetId }: Props) {
     if (!confirm('Are you sure you want to delete this snippet?')) return;
 
     try {
-      const { error } = await supabase
-        .from('snippets')
-        .delete()
-        .eq('id', snippet.id);
-
-      if (error) throw error;
+      await deleteSnippet(snippet.id);
       window.location.href = '/dashboard';
     } catch (err: any) {
       alert('Failed to delete snippet: ' + err.message);
