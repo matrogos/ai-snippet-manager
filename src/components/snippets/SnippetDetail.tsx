@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { fetchSnippetById } from '@/lib/api-client';
 import type { Snippet } from '@/types/snippet';
 
 interface Props {
@@ -87,27 +88,14 @@ export default function SnippetDetail({ snippetId }: Props) {
 
   async function loadSnippet() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/login';
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('snippets')
-        .select('*')
-        .eq('id', snippetId)
-        .single();
-
-      if (error) throw error;
-      if (!data) {
-        setError('Snippet not found');
-        return;
-      }
-
+      const data = await fetchSnippetById(snippetId);
       setSnippet(data as Snippet);
     } catch (err: any) {
       setError(err.message || 'Failed to load snippet');
+      // Redirect to login if not authenticated
+      if (err.message?.includes('Not authenticated')) {
+        window.location.href = '/login';
+      }
     } finally {
       setLoading(false);
     }
