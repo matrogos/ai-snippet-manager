@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type {
   GetSnippetsCommand,
   GetSnippetByIdCommand,
+  UpdateSnippetCommand,
   SnippetResponseDTO,
   PaginatedSnippetsResponseDTO,
 } from '@/types/snippet.dto';
@@ -172,6 +173,88 @@ export class SnippetService {
       };
     } catch (error) {
       console.error('Service error in getSnippetById:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a snippet by ID for a user (supports partial updates)
+   * Returns updated SnippetResponseDTO if successful, null if not found or doesn't belong to user
+   */
+  static async updateSnippet(
+    command: UpdateSnippetCommand,
+    accessToken: string
+  ): Promise<SnippetResponseDTO | null> {
+    try {
+      // Create authenticated Supabase client with the user's token
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      });
+
+      // First verify the snippet exists and belongs to the user
+      const { data: existingSnippet, error: checkError } = await supabase
+        .from('snippets')
+        .select('id')
+        .eq('id', command.id)
+        .eq('user_id', command.user_id)
+        .single();
+
+      if (checkError) {
+        // If error is "not found", return null (don't throw)
+        if (checkError.code === 'PGRST116') {
+          return null;
+        }
+        console.error('Database error in updateSnippet (check):', checkError);
+        throw checkError;
+      }
+
+      if (!existingSnippet) {
+        return null;
+      }
+
+      // Update the snippet with provided fields
+      // Supabase will automatically update the updated_at timestamp via trigger
+      const { data, error } = await supabase
+        .from('snippets')
+        .update(command.updates)
+        .eq('id', command.id)
+        .eq('user_id', command.user_id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database error in updateSnippet:', error);
+        throw error;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      // Transform to DTO
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        title: data.title,
+        code: data.code,
+        language: data.language,
+        description: data.description || null,
+        ai_description: data.ai_description || null,
+        ai_explanation: data.ai_explanation || null,
+        tags: data.tags || [],
+        is_favorite: data.is_favorite || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+    } catch (error) {
+      console.error('Service error in updateSnippet:', error);
       throw error;
     }
   }

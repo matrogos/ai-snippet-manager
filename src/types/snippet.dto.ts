@@ -79,6 +79,38 @@ export interface GetSnippetByIdCommand {
 }
 
 /**
+ * Request DTO for PUT /api/snippets/{id} (partial update support)
+ */
+export interface UpdateSnippetRequestDTO {
+  title?: string;
+  code?: string;
+  language?: string;
+  description?: string | null;
+  tags?: string[];
+  ai_description?: string | null;
+  ai_explanation?: string | null;
+  is_favorite?: boolean;
+}
+
+/**
+ * Service command model for updating a snippet
+ */
+export interface UpdateSnippetCommand {
+  id: string;
+  user_id: string;
+  updates: {
+    title?: string;
+    code?: string;
+    language?: string;
+    description?: string | null;
+    tags?: string[];
+    ai_description?: string | null;
+    ai_explanation?: string | null;
+    is_favorite?: boolean;
+  };
+}
+
+/**
  * Standard error response format
  */
 export interface ErrorResponse {
