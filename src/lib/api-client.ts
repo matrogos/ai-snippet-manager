@@ -6,6 +6,10 @@ import type {
   CreateSnippetRequestDTO,
   UpdateSnippetRequestDTO
 } from '@/types/snippet.dto';
+import type {
+  SuggestTagsRequestDTO,
+  SuggestTagsResponseDTO
+} from '@/types/ai.dto';
 
 /**
  * API Client for making authenticated requests to backend API
@@ -166,6 +170,34 @@ export async function updateSnippet(
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error?.message || 'Failed to update snippet');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Client error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Suggest tags for code using AI
+ */
+export async function suggestTags(
+  request: SuggestTagsRequestDTO
+): Promise<SuggestTagsResponseDTO> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = '/api/ai/suggest-tags';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to suggest tags');
     }
 
     return await response.json();

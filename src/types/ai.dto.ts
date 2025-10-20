@@ -1,0 +1,25 @@
+// DTO types for AI API endpoints
+
+/**
+ * Request DTO for POST /api/ai/suggest-tags
+ */
+export interface SuggestTagsRequestDTO {
+  code: string;
+  language: string;
+}
+
+/**
+ * Response DTO for POST /api/ai/suggest-tags
+ */
+export interface SuggestTagsResponseDTO {
+  tags: string[];
+}
+
+/**
+ * Service command model for suggesting tags
+ */
+export interface SuggestTagsCommand {
+  code: string;
+  language: string;
+  user_id: string; // For rate limiting tracking
+}

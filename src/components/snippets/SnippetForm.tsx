@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { SUPPORTED_LANGUAGES, LANGUAGE_LABELS } from '@/config/languages';
 import { validateSnippetInput } from '@/lib/utils';
+import { suggestTags } from '@/lib/api-client';
 import type { Snippet } from '@/types/snippet';
 
 interface Props {
@@ -105,18 +106,7 @@ export default function SnippetForm({ snippet, onSubmit, submitLabel = 'Create S
     setErrors([]);
 
     try {
-      const response = await fetch('/api/ai/suggest-tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to suggest tags');
-      }
-
+      const data = await suggestTags({ code, language });
       setTagsInput(data.tags.join(', '));
     } catch (err: any) {
       setErrors([err.message || 'Failed to suggest tags']);
