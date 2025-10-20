@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type {
   GetSnippetsCommand,
+  GetSnippetByIdCommand,
   SnippetResponseDTO,
   PaginatedSnippetsResponseDTO,
 } from '@/types/snippet.dto';
@@ -107,6 +108,70 @@ export class SnippetService {
       };
     } catch (error) {
       console.error('Service error in getSnippets:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a specific snippet by ID for a user
+   * Returns null if snippet not found or doesn't belong to the user
+   */
+  static async getSnippetById(
+    command: GetSnippetByIdCommand,
+    accessToken: string
+  ): Promise<SnippetResponseDTO | null> {
+    try {
+      // Create authenticated Supabase client with the user's token
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      });
+
+      // Query snippet by ID and user_id for security
+      const { data, error } = await supabase
+        .from('snippets')
+        .select('*')
+        .eq('id', command.id)
+        .eq('user_id', command.user_id)
+        .single();
+
+      if (error) {
+        // If error is "not found", return null (don't throw)
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        console.error('Database error in getSnippetById:', error);
+        throw error;
+      }
+
+      // Return null if no data found
+      if (!data) {
+        return null;
+      }
+
+      // Transform to DTO
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        title: data.title,
+        code: data.code,
+        language: data.language,
+        description: data.description || null,
+        ai_description: data.ai_description || null,
+        ai_explanation: data.ai_explanation || null,
+        tags: data.tags || [],
+        is_favorite: data.is_favorite || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+    } catch (error) {
+      console.error('Service error in getSnippetById:', error);
       throw error;
     }
   }

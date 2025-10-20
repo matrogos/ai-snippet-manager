@@ -6,7 +6,7 @@ import {
   ALLOWED_SORT_ORDERS,
   DEFAULT_QUERY_PARAMS,
 } from '@/constants/snippet.constants';
-import type { SnippetListQueryDTO } from '@/types/snippet.dto';
+import type { SnippetListQueryDTO, SnippetIdParamDTO } from '@/types/snippet.dto';
 
 /**
  * Zod schema for validating GET /api/snippets query parameters
@@ -86,4 +86,30 @@ export function formatValidationErrors(error: z.ZodError): {
       message: err.message,
     })),
   };
+}
+
+/**
+ * Zod schema for validating snippet ID parameter (UUID format)
+ */
+export const snippetIdParamSchema = z.object({
+  id: z.string().uuid({
+    message: 'Invalid snippet ID format. Must be a valid UUID.',
+  }),
+});
+
+/**
+ * Validate and parse snippet ID parameter
+ */
+export function validateSnippetId(
+  id: string
+): { success: true; data: SnippetIdParamDTO } | { success: false; error: z.ZodError } {
+  try {
+    const result = snippetIdParamSchema.parse({ id });
+    return { success: true, data: result };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error };
+    }
+    throw error;
+  }
 }
