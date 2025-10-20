@@ -47,3 +47,27 @@ export interface ExplainCodeCommand {
   language: string;
   user_id: string; // For rate limiting tracking
 }
+
+/**
+ * Request DTO for POST /api/ai/generate-description
+ */
+export interface GenerateDescriptionRequestDTO {
+  code: string;
+  language: string;
+}
+
+/**
+ * Response DTO for POST /api/ai/generate-description
+ */
+export interface GenerateDescriptionResponseDTO {
+  description: string;
+}
+
+/**
+ * Service command model for generating description
+ */
+export interface GenerateDescriptionCommand {
+  code: string;
+  language: string;
+  user_id: string; // For rate limiting tracking
+}
