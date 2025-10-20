@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase, createSnippet } from '@/lib/supabase';
-import { fetchSnippetById } from '@/lib/api-client';
+import { fetchSnippetById, updateSnippet } from '@/lib/api-client';
 import SnippetForm from './SnippetForm';
 import type { Snippet } from '@/types/snippet';
 
@@ -58,12 +58,7 @@ export default function SnippetFormWrapper({ mode, snippetId }: Props) {
       });
       window.location.href = '/dashboard';
     } else if (mode === 'edit' && snippetId) {
-      const { error } = await supabase
-        .from('snippets')
-        .update(data)
-        .eq('id', snippetId);
-
-      if (error) throw error;
+      await updateSnippet(snippetId, data);
       window.location.href = `/snippet/${snippetId}`;
     }
   }
