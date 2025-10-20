@@ -79,6 +79,33 @@ export interface GetSnippetByIdCommand {
 }
 
 /**
+ * Request DTO for POST /api/snippets
+ */
+export interface CreateSnippetRequestDTO {
+  title: string;
+  code: string;
+  language: string;
+  description?: string | null;
+  tags?: string[];
+  ai_description?: string | null;
+  ai_explanation?: string | null;
+}
+
+/**
+ * Service command model for creating a snippet
+ */
+export interface CreateSnippetCommand {
+  user_id: string;
+  title: string;
+  code: string;
+  language: string;
+  description?: string | null;
+  tags: string[];
+  ai_description?: string | null;
+  ai_explanation?: string | null;
+}
+
+/**
  * Request DTO for PUT /api/snippets/{id} (partial update support)
  */
 export interface UpdateSnippetRequestDTO {

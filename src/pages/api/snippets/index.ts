@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import { requireAuth } from '@/middleware/auth.middleware';
-import { validateSnippetListQuery, formatValidationErrors } from '@/validators/snippet.validator';
+import { validateSnippetListQuery, validateCreateSnippet, formatValidationErrors } from '@/validators/snippet.validator';
 import { SnippetService } from '@/services/snippet.service';
 import { errorResponse, handleDatabaseError, handleUnexpectedError } from '@/utils/error-handler';
-import type { GetSnippetsCommand } from '@/types/snippet.dto';
+import type { GetSnippetsCommand, CreateSnippetCommand } from '@/types/snippet.dto';
 
 /**
  * GET /api/snippets
@@ -60,6 +60,78 @@ export const GET: APIRoute = async (context) => {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
+      },
+    });
+  } catch (error: any) {
+    // Handle authentication errors (thrown by requireAuth)
+    if (error instanceof Response) {
+      return error;
+    }
+
+    // Handle database errors
+    if (error.code) {
+      return handleDatabaseError(error);
+    }
+
+    // Handle unexpected errors
+    return handleUnexpectedError(error);
+  }
+};
+
+/**
+ * POST /api/snippets
+ * Create a new snippet for the authenticated user
+ */
+export const POST: APIRoute = async (context) => {
+  try {
+    // 1. Authenticate user
+    const { user_id, access_token } = await requireAuth(context);
+
+    // 2. Parse and validate request body
+    let body;
+    try {
+      body = await context.request.json();
+    } catch (e) {
+      return errorResponse(
+        400,
+        'VALIDATION_ERROR',
+        'Invalid JSON format'
+      );
+    }
+
+    // 3. Validate create snippet data
+    const validation = validateCreateSnippet(body);
+
+    if (!validation.success) {
+      return errorResponse(
+        400,
+        'VALIDATION_ERROR',
+        'Validation failed',
+        formatValidationErrors(validation.error)
+      );
+    }
+
+    // 4. Build service command
+    const command: CreateSnippetCommand = {
+      user_id,
+      title: validation.data.title,
+      code: validation.data.code,
+      language: validation.data.language,
+      description: validation.data.description,
+      tags: validation.data.tags || [],
+      ai_description: validation.data.ai_description,
+      ai_explanation: validation.data.ai_explanation,
+    };
+
+    // 5. Call service to create snippet
+    const createdSnippet = await SnippetService.createSnippet(command, access_token);
+
+    // 6. Return 201 Created with Location header
+    return new Response(JSON.stringify(createdSnippet), {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Location': `/api/snippets/${createdSnippet.id}`,
       },
     });
   } catch (error: any) {

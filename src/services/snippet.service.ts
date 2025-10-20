@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type {
   GetSnippetsCommand,
   GetSnippetByIdCommand,
+  CreateSnippetCommand,
   UpdateSnippetCommand,
   SnippetResponseDTO,
   PaginatedSnippetsResponseDTO,
@@ -173,6 +174,75 @@ export class SnippetService {
       };
     } catch (error) {
       console.error('Service error in getSnippetById:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new snippet for a user
+   * Returns created SnippetResponseDTO with auto-generated ID and timestamps
+   */
+  static async createSnippet(
+    command: CreateSnippetCommand,
+    accessToken: string
+  ): Promise<SnippetResponseDTO> {
+    try {
+      // Create authenticated Supabase client with the user's token
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      });
+
+      // Insert new snippet
+      // Database will auto-generate: id (UUID), created_at, updated_at
+      // Database will set default: is_favorite = false
+      const { data, error } = await supabase
+        .from('snippets')
+        .insert({
+          user_id: command.user_id,
+          title: command.title,
+          code: command.code,
+          language: command.language,
+          description: command.description,
+          tags: command.tags,
+          ai_description: command.ai_description,
+          ai_explanation: command.ai_explanation,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database error in createSnippet:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Failed to create snippet - no data returned');
+      }
+
+      // Transform to DTO
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        title: data.title,
+        code: data.code,
+        language: data.language,
+        description: data.description || null,
+        ai_description: data.ai_description || null,
+        ai_explanation: data.ai_explanation || null,
+        tags: data.tags || [],
+        is_favorite: data.is_favorite || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+    } catch (error) {
+      console.error('Service error in createSnippet:', error);
       throw error;
     }
   }
