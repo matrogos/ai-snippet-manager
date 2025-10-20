@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { SUPPORTED_LANGUAGES, LANGUAGE_LABELS } from '@/config/languages';
 import { validateSnippetInput } from '@/lib/utils';
-import { suggestTags } from '@/lib/api-client';
+import { suggestTags, generateDescriptionAPI } from '@/lib/api-client';
 import type { Snippet } from '@/types/snippet';
 
 interface Props {
@@ -76,18 +76,7 @@ export default function SnippetForm({ snippet, onSubmit, submitLabel = 'Create S
     setErrors([]);
 
     try {
-      const response = await fetch('/api/ai/generate-description', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate description');
-      }
-
+      const data = await generateDescriptionAPI({ code, language });
       setDescription(data.description);
     } catch (err: any) {
       setErrors([err.message || 'Failed to generate description']);

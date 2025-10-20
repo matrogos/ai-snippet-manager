@@ -10,7 +10,9 @@ import type {
   SuggestTagsRequestDTO,
   SuggestTagsResponseDTO,
   ExplainCodeRequestDTO,
-  ExplainCodeResponseDTO
+  ExplainCodeResponseDTO,
+  GenerateDescriptionRequestDTO,
+  GenerateDescriptionResponseDTO
 } from '@/types/ai.dto';
 
 /**
@@ -228,6 +230,34 @@ export async function explainCode(
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error?.message || 'Failed to explain code');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Client error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generate description for code using AI
+ */
+export async function generateDescriptionAPI(
+  request: GenerateDescriptionRequestDTO
+): Promise<GenerateDescriptionResponseDTO> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = '/api/ai/generate-description';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to generate description');
     }
 
     return await response.json();
