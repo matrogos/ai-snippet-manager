@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { fetchSnippetById } from '@/lib/api-client';
+import { fetchSnippetById, explainCode } from '@/lib/api-client';
 import type { Snippet } from '@/types/snippet';
 
 interface Props {
@@ -137,18 +137,10 @@ export default function SnippetDetail({ snippetId }: Props) {
     setError('');
 
     try {
-      const response = await fetch('/api/ai/explain-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: snippet.code, language: snippet.language }),
+      const data = await explainCode({
+        code: snippet.code,
+        language: snippet.language
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to explain code');
-      }
-
       setExplanation(data.explanation);
     } catch (err: any) {
       setError(err.message || 'Failed to explain code');
