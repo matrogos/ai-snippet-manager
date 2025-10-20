@@ -8,7 +8,9 @@ import type {
 } from '@/types/snippet.dto';
 import type {
   SuggestTagsRequestDTO,
-  SuggestTagsResponseDTO
+  SuggestTagsResponseDTO,
+  ExplainCodeRequestDTO,
+  ExplainCodeResponseDTO
 } from '@/types/ai.dto';
 
 /**
@@ -198,6 +200,34 @@ export async function suggestTags(
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error?.message || 'Failed to suggest tags');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Client error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Explain code using AI
+ */
+export async function explainCode(
+  request: ExplainCodeRequestDTO
+): Promise<ExplainCodeResponseDTO> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = '/api/ai/explain-code';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to explain code');
     }
 
     return await response.json();

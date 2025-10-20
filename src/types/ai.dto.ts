@@ -23,3 +23,27 @@ export interface SuggestTagsCommand {
   language: string;
   user_id: string; // For rate limiting tracking
 }
+
+/**
+ * Request DTO for POST /api/ai/explain-code
+ */
+export interface ExplainCodeRequestDTO {
+  code: string;
+  language: string;
+}
+
+/**
+ * Response DTO for POST /api/ai/explain-code
+ */
+export interface ExplainCodeResponseDTO {
+  explanation: string;
+}
+
+/**
+ * Service command model for explaining code
+ */
+export interface ExplainCodeCommand {
+  code: string;
+  language: string;
+  user_id: string; // For rate limiting tracking
+}
