@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase, createSnippet } from '@/lib/supabase';
-import { fetchSnippetById, updateSnippet } from '@/lib/api-client';
+import { supabase } from '@/lib/supabase';
+import { fetchSnippetById, createSnippet, updateSnippet } from '@/lib/api-client';
 import SnippetForm from './SnippetForm';
 import type { Snippet } from '@/types/snippet';
 
@@ -46,16 +46,8 @@ export default function SnippetFormWrapper({ mode, snippetId }: Props) {
   }
 
   async function handleSubmit(data: any) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw new Error('Not authenticated');
-    }
-
     if (mode === 'create') {
-      await createSnippet({
-        ...data,
-        user_id: session.user.id,
-      });
+      await createSnippet(data);
       window.location.href = '/dashboard';
     } else if (mode === 'edit' && snippetId) {
       await updateSnippet(snippetId, data);

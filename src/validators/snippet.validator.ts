@@ -6,7 +6,12 @@ import {
   ALLOWED_SORT_ORDERS,
   DEFAULT_QUERY_PARAMS,
 } from '@/constants/snippet.constants';
-import type { SnippetListQueryDTO, SnippetIdParamDTO, UpdateSnippetRequestDTO } from '@/types/snippet.dto';
+import type {
+  SnippetListQueryDTO,
+  SnippetIdParamDTO,
+  CreateSnippetRequestDTO,
+  UpdateSnippetRequestDTO
+} from '@/types/snippet.dto';
 
 /**
  * Zod schema for validating GET /api/snippets query parameters
@@ -105,6 +110,76 @@ export function validateSnippetId(
 ): { success: true; data: SnippetIdParamDTO } | { success: false; error: z.ZodError } {
   try {
     const result = snippetIdParamSchema.parse({ id });
+    return { success: true, data: result };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Zod schema for validating POST /api/snippets request body
+ */
+export const createSnippetSchema = z.object({
+  title: z
+    .string({ required_error: 'Title is required' })
+    .min(1, { message: 'Title must not be empty' })
+    .max(VALIDATION_RULES.TITLE_MAX_LENGTH, {
+      message: `Title exceeds maximum length of ${VALIDATION_RULES.TITLE_MAX_LENGTH} characters`,
+    })
+    .transform((s) => s.trim()),
+
+  code: z
+    .string({ required_error: 'Code is required' })
+    .min(1, { message: 'Code must not be empty' })
+    .max(VALIDATION_RULES.CODE_MAX_LENGTH, {
+      message: `Code exceeds maximum length of ${VALIDATION_RULES.CODE_MAX_LENGTH} characters`,
+    })
+    .transform((s) => s.trim()),
+
+  language: z.enum(
+    SUPPORTED_LANGUAGES as [string, ...string[]],
+    {
+      required_error: 'Language is required',
+      errorMap: () => ({
+        message: `Unsupported language. Must be one of: ${SUPPORTED_LANGUAGES.join(', ')}`,
+      }),
+    }
+  ),
+
+  description: z.string().nullable().optional(),
+
+  tags: z
+    .array(
+      z
+        .string()
+        .min(VALIDATION_RULES.TAG_MIN_LENGTH, {
+          message: `Each tag must be at least ${VALIDATION_RULES.TAG_MIN_LENGTH} characters`,
+        })
+        .max(VALIDATION_RULES.TAG_MAX_LENGTH, {
+          message: `Each tag must not exceed ${VALIDATION_RULES.TAG_MAX_LENGTH} characters`,
+        })
+    )
+    .max(VALIDATION_RULES.TAGS_MAX_COUNT, {
+      message: `Maximum ${VALIDATION_RULES.TAGS_MAX_COUNT} tags allowed`,
+    })
+    .default([]),
+
+  ai_description: z.string().nullable().optional(),
+
+  ai_explanation: z.string().nullable().optional(),
+});
+
+/**
+ * Validate and parse create snippet request body
+ */
+export function validateCreateSnippet(
+  body: unknown
+): { success: true; data: CreateSnippetRequestDTO } | { success: false; error: z.ZodError } {
+  try {
+    const result = createSnippetSchema.parse(body);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {

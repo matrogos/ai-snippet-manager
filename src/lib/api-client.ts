@@ -3,6 +3,7 @@ import type {
   PaginatedSnippetsResponseDTO,
   SnippetListQueryDTO,
   SnippetResponseDTO,
+  CreateSnippetRequestDTO,
   UpdateSnippetRequestDTO
 } from '@/types/snippet.dto';
 
@@ -108,6 +109,34 @@ export async function fetchSnippetById(id: string): Promise<SnippetResponseDTO> 
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error?.message || 'Failed to fetch snippet');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Client error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a new snippet via API
+ */
+export async function createSnippet(
+  snippet: CreateSnippetRequestDTO
+): Promise<SnippetResponseDTO> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = '/api/snippets';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(snippet),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to create snippet');
     }
 
     return await response.json();
