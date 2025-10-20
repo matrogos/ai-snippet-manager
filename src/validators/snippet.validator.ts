@@ -142,10 +142,12 @@ export const createSnippetSchema = z.object({
   language: z.enum(
     SUPPORTED_LANGUAGES as [string, ...string[]],
     {
-      required_error: 'Language is required',
-      errorMap: () => ({
-        message: `Unsupported language. Must be one of: ${SUPPORTED_LANGUAGES.join(', ')}`,
-      }),
+      errorMap: (issue, ctx) => {
+        if (issue.code === 'invalid_type') {
+          return { message: 'Language is required' };
+        }
+        return { message: `Unsupported language. Must be one of: ${SUPPORTED_LANGUAGES.join(', ')}` };
+      },
     }
   ),
 
