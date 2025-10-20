@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { PaginatedSnippetsResponseDTO, SnippetListQueryDTO } from '@/types/snippet.dto';
+import type { PaginatedSnippetsResponseDTO, SnippetListQueryDTO, SnippetResponseDTO } from '@/types/snippet.dto';
 
 /**
  * API Client for making authenticated requests to backend API
@@ -78,6 +78,31 @@ export async function fetchSnippets(
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error?.message || 'Failed to fetch snippets');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Client error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch a single snippet by ID from API
+ */
+export async function fetchSnippetById(id: string): Promise<SnippetResponseDTO> {
+  try {
+    const headers = await getAuthHeaders();
+    const url = `/api/snippets/${id}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to fetch snippet');
     }
 
     return await response.json();

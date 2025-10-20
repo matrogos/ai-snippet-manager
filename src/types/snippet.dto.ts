@@ -64,6 +64,21 @@ export interface GetSnippetsCommand {
 }
 
 /**
+ * Path parameter for GET /api/snippets/{id}
+ */
+export interface SnippetIdParamDTO {
+  id: string; // UUID format
+}
+
+/**
+ * Service command model for getting snippet by ID
+ */
+export interface GetSnippetByIdCommand {
+  id: string;
+  user_id: string;
+}
+
+/**
  * Standard error response format
  */
 export interface ErrorResponse {

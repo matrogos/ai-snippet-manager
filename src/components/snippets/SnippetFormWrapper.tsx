@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase, createSnippet } from '@/lib/supabase';
+import { fetchSnippetById } from '@/lib/api-client';
 import SnippetForm from './SnippetForm';
 import type { Snippet } from '@/types/snippet';
 
@@ -25,20 +26,16 @@ export default function SnippetFormWrapper({ mode, snippetId }: Props) {
         return;
       }
 
-      // If editing, load the snippet
+      // If editing, load the snippet using API
       if (mode === 'edit' && snippetId) {
-        const { data, error } = await supabase
-          .from('snippets')
-          .select('*')
-          .eq('id', snippetId)
-          .single();
-
-        if (error || !data) {
+        try {
+          const data = await fetchSnippetById(snippetId);
+          setSnippet(data as Snippet);
+        } catch (err: any) {
           setError('Snippet not found');
+          setLoading(false);
           return;
         }
-
-        setSnippet(data as Snippet);
       }
 
       setLoading(false);
