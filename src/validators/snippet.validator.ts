@@ -164,8 +164,8 @@ export const createSnippetSchema = z.object({
           message: `Each tag must not exceed ${VALIDATION_RULES.TAG_MAX_LENGTH} characters`,
         })
     )
-    .max(VALIDATION_RULES.TAGS_MAX_COUNT, {
-      message: `Maximum ${VALIDATION_RULES.TAGS_MAX_COUNT} tags allowed`,
+    .max(VALIDATION_RULES.TAG_MAX_COUNT, {
+      message: `Maximum ${VALIDATION_RULES.TAG_MAX_COUNT} tags allowed`,
     })
     .default([]),
 
@@ -238,8 +238,8 @@ export const updateSnippetSchema = z
             message: `Each tag must not exceed ${VALIDATION_RULES.TAG_MAX_LENGTH} characters`,
           })
       )
-      .max(VALIDATION_RULES.TAGS_MAX_COUNT, {
-        message: `Maximum ${VALIDATION_RULES.TAGS_MAX_COUNT} tags allowed`,
+      .max(VALIDATION_RULES.TAG_MAX_COUNT, {
+        message: `Maximum ${VALIDATION_RULES.TAG_MAX_COUNT} tags allowed`,
       })
       .optional(),
 
