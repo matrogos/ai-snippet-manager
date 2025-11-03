@@ -14,8 +14,12 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:run": "vitest run",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "dev:test": "dotenv -e .env.test -- astro dev",
+    "test:e2e": "node scripts/run-e2e-tests.js",
+    "test:e2e:ui": "node scripts/run-e2e-tests.js --ui",
+    "test:e2e:validate": "tsx tests/e2e/scripts/validate-env.ts",
+    "test:e2e:check": "tsx tests/e2e/scripts/test-connection.ts",
+    "test:e2e:setup": "npm run test:e2e:validate && npm run test:e2e:check"
   },
   "dependencies": {
     "@astrojs/react": "^4.0.0",
@@ -42,11 +46,14 @@
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
     "@vitest/ui": "^4.0.6",
+    "dotenv": "^17.2.3",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.15.0",
     "eslint-plugin-astro": "^1.3.0",
     "jsdom": "^24.1.3",
     "prettier": "^3.4.1",
     "prettier-plugin-astro": "^0.14.1",
+    "tsx": "^4.20.6",
     "typescript": "^5.7.2",
     "vitest": "^4.0.6"
   },

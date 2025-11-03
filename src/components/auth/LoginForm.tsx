@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { signIn } from '@/lib/supabase';
+import { useState, useEffect, type FormEvent } from 'react';
+import { signIn, supabase } from '@/lib/supabase';
 import { isValidEmail } from '@/lib/utils';
 
 export default function LoginForm() {
@@ -7,6 +7,17 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = '/dashboard';
+      }
+    };
+    checkSession();
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,10 +38,7 @@ export default function LoginForm() {
     }
 
     try {
-      console.log('Attempting login...');
       const { data, error: signInError } = await signIn(email, password);
-
-      console.log('Login response:', { data, error: signInError });
 
       if (signInError) {
         setError(signInError.message);
@@ -46,13 +54,9 @@ export default function LoginForm() {
         return;
       }
 
-      console.log('Session created successfully:', data.session);
-      console.log('Access token:', data.session.access_token ? 'Present' : 'Missing');
-
       // Small delay to ensure session is stored
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      console.log('Redirecting to dashboard...');
       // Redirect to dashboard
       window.location.href = '/dashboard';
     } catch (err) {
