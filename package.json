@@ -8,7 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "type-check": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx,.astro",
+    "lint": "eslint src tests",
     "format": "prettier --write \"src/**/*.{ts,tsx,astro,css}\"",
     "test": "vitest",
     "test:ui": "vitest --ui",
