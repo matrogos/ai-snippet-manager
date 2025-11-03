@@ -4,9 +4,9 @@ export interface Snippet {
   title: string;
   code: string;
   language: string;
-  description?: string;
-  ai_description?: string;
-  ai_explanation?: string;
+  description: string | null;
+  ai_description: string | null;
+  ai_explanation: string | null;
   tags: string[];
   is_favorite: boolean;
   created_at: string;

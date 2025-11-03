@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { requireAuth } from '@/middleware/auth.middleware';
 import { validateSuggestTags, formatValidationErrors } from '@/validators/ai.validator';
 import { callOpenAIWithRetry, suggestTags } from '@/lib/openai';
-import { errorResponse, handleDatabaseError, handleUnexpectedError } from '@/utils/error-handler';
+import { errorResponse, handleUnexpectedError } from '@/utils/error-handler';
 import type { SuggestTagsCommand } from '@/types/ai.dto';
 
 /**

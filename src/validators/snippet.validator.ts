@@ -2,8 +2,6 @@ import { z } from 'zod';
 import {
   SUPPORTED_LANGUAGES,
   VALIDATION_RULES,
-  ALLOWED_SORT_FIELDS,
-  ALLOWED_SORT_ORDERS,
   DEFAULT_QUERY_PARAMS,
 } from '@/constants/snippet.constants';
 import type {
@@ -140,9 +138,9 @@ export const createSnippetSchema = z.object({
     .transform((s) => s.trim()),
 
   language: z.enum(
-    SUPPORTED_LANGUAGES as [string, ...string[]],
+    [...SUPPORTED_LANGUAGES] as [string, ...string[]],
     {
-      errorMap: (issue, ctx) => {
+      errorMap: (issue, _ctx) => {
         if (issue.code === 'invalid_type') {
           return { message: 'Language is required' };
         }
@@ -216,7 +214,7 @@ export const updateSnippetSchema = z
 
     language: z
       .enum(
-        SUPPORTED_LANGUAGES as [string, ...string[]],
+        [...SUPPORTED_LANGUAGES] as [string, ...string[]],
         {
           errorMap: () => ({
             message: `Unsupported language. Must be one of: ${SUPPORTED_LANGUAGES.join(', ')}`,

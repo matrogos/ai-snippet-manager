@@ -1,0 +1,309 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+# Required for PR comments
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run type-check
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload unit test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage
+          path: coverage/
+          retention-days: 7
+
+      - name: Generate coverage summary
+        id: coverage
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(node -p "
+              const fs = require('fs');
+              const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+              const total = coverage.total;
+              Math.round((total.lines.pct + total.statements.pct + total.functions.pct + total.branches.pct) / 4);
+            ")
+            echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+          else
+            echo "percentage=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment unit test coverage
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const coverage = '${{ steps.coverage.outputs.percentage }}';
+            const body = `### 📊 Unit Test Coverage: ${coverage}%`;
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Unit Test Coverage')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    environment: integration
+
+    env:
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      PUBLIC_APP_URL: http://localhost:4321
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create test environment file
+        run: |
+          cat > .env.test << EOF
+          PUBLIC_SUPABASE_URL=${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY=${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_USER_EMAIL=${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD=${{ secrets.TEST_USER_PASSWORD }}
+          TEST_USER_ID=${{ secrets.TEST_USER_ID }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          PUBLIC_APP_URL=http://localhost:4321
+          NODE_ENV=test
+          EOF
+
+      - name: Validate E2E test setup
+        run: npm run test:e2e:validate
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        timeout-minutes: 10
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Upload E2E coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-coverage
+          path: coverage-e2e/
+          retention-days: 7
+
+      - name: Get E2E test summary
+        id: e2e-summary
+        if: always()
+        run: |
+          # Parse Playwright results
+          if [ -f playwright-report/index.html ]; then
+            # Extract test results (passed/failed/skipped)
+            PASSED=$(grep -oP 'passed":\K\d+' playwright-report/index.html | head -1 || echo "0")
+            FAILED=$(grep -oP 'failed":\K\d+' playwright-report/index.html | head -1 || echo "0")
+            SKIPPED=$(grep -oP 'skipped":\K\d+' playwright-report/index.html | head -1 || echo "0")
+
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+          else
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+          fi
+
+  status-comment:
+    name: Post Status Comment
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, e2e-test]
+    if: always() && needs.lint.result == 'success'
+
+    steps:
+      - name: Download unit coverage artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: unit-coverage
+          path: coverage/
+
+      - name: Download E2E results artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: e2e-results
+          path: test-results/
+
+      - name: Generate status comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const lintStatus = '${{ needs.lint.result }}';
+            const unitStatus = '${{ needs.unit-test.result }}';
+            const e2eStatus = '${{ needs.e2e-test.result }}';
+
+            const statusIcon = (status) => {
+              switch(status) {
+                case 'success': return '✅';
+                case 'failure': return '❌';
+                case 'cancelled': return '⚠️';
+                case 'skipped': return '⏭️';
+                default: return '❔';
+              }
+            };
+
+            const statusText = (status) => {
+              switch(status) {
+                case 'success': return 'Passed';
+                case 'failure': return 'Failed';
+                case 'cancelled': return 'Cancelled';
+                case 'skipped': return 'Skipped';
+                default: return 'Unknown';
+              }
+            };
+
+            let body = `## 🚀 Pull Request CI Status\n\n`;
+            body += `| Job | Status | Result |\n`;
+            body += `|-----|--------|--------|\n`;
+            body += `| Lint | ${statusIcon(lintStatus)} | ${statusText(lintStatus)} |\n`;
+            body += `| Unit Tests | ${statusIcon(unitStatus)} | ${statusText(unitStatus)} |\n`;
+            body += `| E2E Tests | ${statusIcon(e2eStatus)} | ${statusText(e2eStatus)} |\n\n`;
+
+            // Overall status
+            const allPassed = lintStatus === 'success' && unitStatus === 'success' && e2eStatus === 'success';
+            if (allPassed) {
+              body += `### ✅ All checks passed! This PR is ready for review.\n\n`;
+            } else {
+              body += `### ⚠️ Some checks failed. Please review the errors above.\n\n`;
+            }
+
+            // Add workflow run link
+            body += `📋 [View full workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId})\n`;
+
+            // Add commit info
+            body += `\n---\n`;
+            body += `**Commit:** ${context.sha.substring(0, 7)}\n`;
+            body += `**Branch:** ${context.payload.pull_request.head.ref}\n`;
+
+            // Find and update or create comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Pull Request CI Status')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: Check if all jobs passed
+        if: needs.lint.result != 'success' || needs.unit-test.result != 'success' || needs.e2e-test.result != 'success'
+        run: |
+          echo "::error::One or more jobs failed"
+          exit 1
