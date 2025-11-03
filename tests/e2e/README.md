@@ -96,9 +96,11 @@ supabase db push --db-url "postgresql://..."
 2. **Fill in the values:**
    ```env
    # From Step 4 - API Keys
-   TEST_SUPABASE_URL=https://your-project-id.supabase.co
-   TEST_SUPABASE_ANON_KEY=eyJhbGc... (your anon key)
-   TEST_SUPABASE_SERVICE_ROLE_KEY=eyJhbGc... (your service role key)
+   # IMPORTANT: Use PUBLIC_SUPABASE_* variable names (not TEST_SUPABASE_*)
+   # These match the variable names used by the Astro app
+   PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+   PUBLIC_SUPABASE_ANON_KEY=eyJhbGc... (your anon key)
+   SUPABASE_SERVICE_ROLE_KEY=eyJhbGc... (your service role key)
 
    # From Step 3 - Test Users
    TEST_USER_EMAIL=e2e-test@example.com
@@ -125,9 +127,9 @@ npm run test:e2e:validate
 ```
 🔍 Validating .env.test configuration...
 
-✅ TEST_SUPABASE_URL is configured
-✅ TEST_SUPABASE_ANON_KEY is configured
-✅ TEST_SUPABASE_SERVICE_ROLE_KEY is configured
+✅ PUBLIC_SUPABASE_URL is configured
+✅ PUBLIC_SUPABASE_ANON_KEY is configured
+✅ SUPABASE_SERVICE_ROLE_KEY is configured
 ✅ TEST_USER_EMAIL is configured
 ✅ TEST_USER_PASSWORD is configured
 ✅ TEST_USER_ID is configured
@@ -202,10 +204,11 @@ npm run test:e2e:setup
 
 ## Troubleshooting
 
-### "TEST_SUPABASE_URL is not set"
+### "PUBLIC_SUPABASE_URL is not set"
 
 - Make sure you created `.env.test` (copy from `.env.test.example`)
 - Check that the file is in the project root directory
+- Verify variable names use `PUBLIC_SUPABASE_URL` (not `TEST_SUPABASE_URL`)
 
 ### "Test user not found"
 
@@ -221,8 +224,8 @@ npm run test:e2e:setup
 
 ### "Database connection failed"
 
-- Check `TEST_SUPABASE_URL` is correct (should end with `.supabase.co`)
-- Verify `TEST_SUPABASE_SERVICE_ROLE_KEY` is the service role (not anon key)
+- Check `PUBLIC_SUPABASE_URL` is correct (should end with `.supabase.co`)
+- Verify `SUPABASE_SERVICE_ROLE_KEY` is the service role (not anon key)
 - Make sure project is not paused (free tier pauses after inactivity)
 
 ### "Query failed"
@@ -271,9 +274,15 @@ npm run test:e2e:setup
 ## Security Notes
 
 ⚠️ **Service Role Key**
-- The `TEST_SUPABASE_SERVICE_ROLE_KEY` has full admin access
+- The `SUPABASE_SERVICE_ROLE_KEY` has full admin access
 - **NEVER** commit `.env.test` to git (already in `.gitignore`)
 - Only use in test environment, never in browser code
+
+⚠️ **Environment File Priority**
+- **IMPORTANT:** The test runner temporarily moves `.env.local` during test execution
+- This prevents production credentials from overriding test credentials
+- If you see production database errors during tests, check if `.env.local` exists
+- `.env.local` takes precedence over `.env.test` in Astro's loading order
 
 ✅ **Safe to share in test environment:**
 - Project URL
