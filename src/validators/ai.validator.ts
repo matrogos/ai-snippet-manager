@@ -14,9 +14,9 @@ export const suggestTagsSchema = z.object({
     }),
 
   language: z.enum(
-    SUPPORTED_LANGUAGES as [string, ...string[]],
+    [...SUPPORTED_LANGUAGES] as [string, ...string[]],
     {
-      errorMap: (issue, ctx) => {
+      errorMap: (issue, _ctx) => {
         if (issue.code === 'invalid_type') {
           return { message: 'Language is required' };
         }
@@ -69,9 +69,9 @@ export const explainCodeSchema = z.object({
     }),
 
   language: z.enum(
-    SUPPORTED_LANGUAGES as [string, ...string[]],
+    [...SUPPORTED_LANGUAGES] as [string, ...string[]],
     {
-      errorMap: (issue, ctx) => {
+      errorMap: (issue, _ctx) => {
         if (issue.code === 'invalid_type') {
           return { message: 'Language is required' };
         }
@@ -110,9 +110,9 @@ export const generateDescriptionSchema = z.object({
     }),
 
   language: z.enum(
-    SUPPORTED_LANGUAGES as [string, ...string[]],
+    [...SUPPORTED_LANGUAGES] as [string, ...string[]],
     {
-      errorMap: (issue, ctx) => {
+      errorMap: (issue, _ctx) => {
         if (issue.code === 'invalid_type') {
           return { message: 'Language is required' };
         }
