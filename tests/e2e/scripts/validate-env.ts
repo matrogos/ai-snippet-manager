@@ -23,11 +23,11 @@ if (!existsSync(envPath)) {
 // Load environment variables
 config({ path: envPath });
 
-// Required environment variables
+// Required environment variables (matching what the test fixtures expect)
 const requiredVars = [
-  'TEST_SUPABASE_URL',
-  'TEST_SUPABASE_ANON_KEY',
-  'TEST_SUPABASE_SERVICE_ROLE_KEY',
+  'PUBLIC_SUPABASE_URL',
+  'PUBLIC_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
   'TEST_USER_EMAIL',
   'TEST_USER_PASSWORD',
   'TEST_USER_ID',
@@ -79,12 +79,12 @@ for (const varName of optionalVars) {
 console.log('');
 
 // Validate URL format
-const url = process.env.TEST_SUPABASE_URL;
+const url = process.env.PUBLIC_SUPABASE_URL;
 if (url && !url.startsWith('https://') && !url.startsWith('http://')) {
-  errors.push(`❌ TEST_SUPABASE_URL should start with https://`);
+  errors.push(`❌ PUBLIC_SUPABASE_URL should start with https://`);
 }
 if (url && !url.includes('.supabase.co') && !url.includes('localhost')) {
-  warnings.push(`⚠️  TEST_SUPABASE_URL doesn't look like a Supabase URL: ${url}`);
+  warnings.push(`⚠️  PUBLIC_SUPABASE_URL doesn't look like a Supabase URL: ${url}`);
 }
 
 // Validate email format
